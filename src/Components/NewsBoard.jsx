@@ -5,58 +5,55 @@ export const NewsBoard = ({ category }) => {
   const [articles, setArticles] = useState([]);
   const [page, setPage] = useState(1);
   const [loading, setLoading] = useState(false);
-  const [hasMore, setHasMore] = useState(true); // track if more articles exist
+  const [hasMore, setHasMore] = useState(true);
 
-  // Fetch articles function
-  const fetchArticles = useCallback(async (pageNum = 1, categoryParam = category) => {
-    setLoading(true);
-    const pageSize = 12; // number of articles per page
-    const url = `https://newsapi.org/v2/top-headlines?country=us&category=${categoryParam}&page=${pageNum}&pageSize=${pageSize}&apiKey=${import.meta.env.VITE_API_KEY}`;
+  const fetchArticles = useCallback(
+    async (pageNum = 1, categoryParam = category) => {
+      setLoading(true);
+      const pageSize = 12;
+      const url = `https://newsapi.org/v2/top-headlines?country=us&category=${categoryParam}&page=${pageNum}&pageSize=${pageSize}&apiKey=${import.meta.env.VITE_API_KEY}`;
 
-    try {
-      const response = await fetch(url);
-      const data = await response.json();
+      try {
+        const response = await fetch(url);
+        const data = await response.json();
 
-      if (pageNum === 1) {
-        setArticles(data.articles || []);
-      } else {
-        setArticles(prev => [...prev, ...(data.articles || [])]);
+        if (pageNum === 1) {
+          setArticles(data.articles || []);
+        } else {
+          setArticles((prev) => [...prev, ...(data.articles || [])]);
+        }
+
+        setHasMore((data.articles?.length || 0) === pageSize);
+      } catch (error) {
+        console.error('Error fetching articles:', error);
+      } finally {
+        setLoading(false);
       }
+    },
+    [category]
+  );
 
-      // If received less articles than pageSize, no more pages
-      setHasMore((data.articles?.length || 0) === pageSize);
-    } catch (error) {
-      console.error('Error fetching articles:', error);
-    } finally {
-      setLoading(false);
-    }
-  }, [category]);
-
-  // Initial fetch and category change
   useEffect(() => {
     setPage(1);
     fetchArticles(1, category);
   }, [category, fetchArticles]);
 
-  // Handle scroll event to load more articles
   useEffect(() => {
     const handleScroll = () => {
       if (
         window.innerHeight + window.scrollY >=
-          document.documentElement.scrollHeight - 200 && // near bottom
+          document.documentElement.scrollHeight - 200 &&
         !loading &&
         hasMore
       ) {
-        setPage(prevPage => prevPage + 1);
+        setPage((prevPage) => prevPage + 1);
       }
     };
 
     window.addEventListener('scroll', handleScroll);
-
     return () => window.removeEventListener('scroll', handleScroll);
   }, [loading, hasMore]);
 
-  // Fetch articles when page changes (except first page which is handled on category change)
   useEffect(() => {
     if (page === 1) return;
     fetchArticles(page, category);
@@ -86,10 +83,10 @@ export const NewsBoard = ({ category }) => {
         </h2>
 
         <div className="row gx-4 gy-5 justify-content-center">
-          {articles.map((news, index) => (
+          {articles.map((article, index) => (
             <div
               className="col-12 col-sm-6 col-md-4 col-lg-3 d-flex justify-content-center"
-              key={`${news.url}-${index}`}
+              key={`${article.url}-${index}`}
             >
               <div
                 className="news-card-wrapper"
@@ -103,10 +100,10 @@ export const NewsBoard = ({ category }) => {
                 }}
               >
                 <NewsItem
-                  title={news.title}
-                  description={news.description}
-                  src={news.urlToImage}
-                  url={news.url}
+                  title={article.title}
+                  description={article.description}
+                  imageUrl={article.urlToImage}
+                  url={article.url}
                 />
               </div>
             </div>
@@ -128,7 +125,6 @@ export const NewsBoard = ({ category }) => {
         )}
       </div>
 
-      {/* Custom Animation */}
       <style>{`
         @keyframes slideUpFade {
           to {

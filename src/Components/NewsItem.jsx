@@ -1,8 +1,11 @@
-import { useState } from 'react';
-import fallbackImage from '../assets/image.png'; // Local fallback image
+import React, { useState } from 'react';
+import fallbackImage from '../assets/image.png'; // Local fallback
+import { fetchImageFromUnsplash } from '../api/fetchImage';
 
-function NewsItem({ title, description, src, url }) {
+function NewsItem({ title, description, imageUrl, url }) {
   const [shared, setShared] = useState(false);
+  const [imgSrc, setImgSrc] = useState(imageUrl || fallbackImage);
+  const [triedUnsplash, setTriedUnsplash] = useState(false);
 
   const handleShare = async () => {
     try {
@@ -14,9 +17,18 @@ function NewsItem({ title, description, src, url }) {
     }
   };
 
-  const handleImageError = (e) => {
-    e.target.onerror = null;
-    e.target.src = fallbackImage;
+  const handleImageError = async () => {
+    if (!triedUnsplash) {
+      setTriedUnsplash(true);
+      // Try fetching from Unsplash only once
+      const unsplashUrl = await fetchImageFromUnsplash(title);
+      if (unsplashUrl) {
+        setImgSrc(unsplashUrl);
+        return;
+      }
+    }
+    // If no Unsplash image or already tried, fallback to local image
+    setImgSrc(fallbackImage);
   };
 
   return (
@@ -38,7 +50,7 @@ function NewsItem({ title, description, src, url }) {
       }}
     >
       <img
-        src={src || fallbackImage}
+        src={imgSrc}
         onError={handleImageError}
         className="card-img-top rounded-top-4"
         alt="news"
@@ -61,7 +73,6 @@ function NewsItem({ title, description, src, url }) {
           {description ? description.slice(0, 100) + '...' : 'No description available.'}
         </p>
 
-        {/* Buttons container: flex-wrap only on small screens */}
         <div className="d-flex justify-content-between align-items-center flex-sm-wrap gap-2 mt-3">
           <a
             href={url}
