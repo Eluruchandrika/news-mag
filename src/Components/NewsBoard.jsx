@@ -13,7 +13,7 @@ export const NewsBoard = ({ category }) => {
       const pageSize = 12;
 
       try {
-        const response = await fetch(`/api/news?category=${categoryParam}&page=${pageNum}`);
+        const response = await fetch(`https://news-mag-12sg.onrender.com/api/news?category=${categoryParam}&page=${pageNum}`);
         const data = await response.json();
 
         if (pageNum === 1) {

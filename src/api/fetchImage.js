@@ -11,7 +11,7 @@ export const fetchImageFromUnsplash = async (query) => {
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 7000);
 
-    const res = await fetch(`/api/image?query=${encodeURIComponent(query)}`, {
+    const res = await fetch(`https://news-mag-12sg.onrender.com/api/image?query=${encodeURIComponent(query)}`, {
       signal: controller.signal,
     });
 
