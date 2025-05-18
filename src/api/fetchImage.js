@@ -1,45 +1,34 @@
-const UNSPLASH_KEY = import.meta.env.VITE_UNSPLASH_API_KEY;
-
 /**
- * Fetches an image URL from Unsplash based on the provided search query.
+ * Calls the backend to get a fallback image from Unsplash.
  *
- * @param {string} query - The search term (e.g., news title).
- * @returns {Promise<string|null>} - URL of the image or null if not found.
+ * @param {string} query
+ * @returns {Promise<string|null>}
  */
 export const fetchImageFromUnsplash = async (query) => {
-  if (!UNSPLASH_KEY) {
-    console.error('❌ Unsplash API key is missing.');
-    return null;
-  }
-  
-  if (!query || query.trim() === '') {
-    return null; // no point searching empty query
-  }
+  if (!query || query.trim() === '') return null;
 
   try {
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 7000); // 7 seconds timeout
-    
-    const response = await fetch(
-      `https://api.unsplash.com/search/photos?page=1&query=${encodeURIComponent(query)}&client_id=${UNSPLASH_KEY}`,
-      { signal: controller.signal }
-    );
-    
+    const timeoutId = setTimeout(() => controller.abort(), 7000);
+
+    const res = await fetch(`/api/image?query=${encodeURIComponent(query)}`, {
+      signal: controller.signal,
+    });
+
     clearTimeout(timeoutId);
 
-    if (!response.ok) {
-      console.error(`❌ Unsplash API error: ${response.status} ${response.statusText}`);
+    if (!res.ok) {
+      console.error('Backend failed to fetch Unsplash image.');
       return null;
     }
 
-    const data = await response.json();
-
-    return data?.results?.[0]?.urls?.regular || null;
+    const data = await res.json();
+    return data.imageUrl || null;
   } catch (error) {
     if (error.name === 'AbortError') {
-      console.error('❌ Unsplash fetch aborted due to timeout.');
+      console.warn('Image fetch request timed out.');
     } else {
-      console.error('❌ Unsplash fetch error:', error);
+      console.error('Error fetching image:', error);
     }
     return null;
   }

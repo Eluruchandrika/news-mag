@@ -11,10 +11,9 @@ export const NewsBoard = ({ category }) => {
     async (pageNum = 1, categoryParam = category) => {
       setLoading(true);
       const pageSize = 12;
-      const url = `https://newsapi.org/v2/top-headlines?country=us&category=${categoryParam}&page=${pageNum}&pageSize=${pageSize}&apiKey=${import.meta.env.VITE_API_KEY}`;
 
       try {
-        const response = await fetch(url);
+        const response = await fetch(`/api/news?category=${categoryParam}&page=${pageNum}`);
         const data = await response.json();
 
         if (pageNum === 1) {
@@ -39,19 +38,26 @@ export const NewsBoard = ({ category }) => {
   }, [category, fetchArticles]);
 
   useEffect(() => {
+    let debounceTimer;
     const handleScroll = () => {
-      if (
-        window.innerHeight + window.scrollY >=
-          document.documentElement.scrollHeight - 200 &&
-        !loading &&
-        hasMore
-      ) {
-        setPage((prevPage) => prevPage + 1);
-      }
+      clearTimeout(debounceTimer);
+      debounceTimer = setTimeout(() => {
+        if (
+          window.innerHeight + window.scrollY >=
+            document.documentElement.scrollHeight - 200 &&
+          !loading &&
+          hasMore
+        ) {
+          setPage((prevPage) => prevPage + 1);
+        }
+      }, 100);
     };
 
     window.addEventListener('scroll', handleScroll);
-    return () => window.removeEventListener('scroll', handleScroll);
+    return () => {
+      clearTimeout(debounceTimer);
+      window.removeEventListener('scroll', handleScroll);
+    };
   }, [loading, hasMore]);
 
   useEffect(() => {
@@ -86,7 +92,7 @@ export const NewsBoard = ({ category }) => {
           {articles.map((article, index) => (
             <div
               className="col-12 col-sm-6 col-md-4 col-lg-3 d-flex justify-content-center"
-              key={`${article.url}-${index}`}
+              key={article.url}
             >
               <div
                 className="news-card-wrapper"
@@ -97,6 +103,7 @@ export const NewsBoard = ({ category }) => {
                   transform: 'translateY(20px)',
                   animation: 'slideUpFade 0.6s ease forwards',
                   animationDelay: `${index * 0.1}s`,
+                  willChange: 'transform, opacity',
                 }}
               >
                 <NewsItem
@@ -111,7 +118,7 @@ export const NewsBoard = ({ category }) => {
         </div>
 
         {loading && (
-          <div className="text-center mt-4">
+          <div className="text-center mt-4" aria-live="polite">
             <div
               className="spinner-border text-light"
               role="status"
